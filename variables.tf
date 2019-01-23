@@ -3,9 +3,9 @@ variable "VPC_name" {
     description= "Nom du VPC"
 }
 
-variable "VPC_subnet_CIDR" {
+variable "VPC_CIDR" {
     type = "string"
-    description= "CIDR du subnet du VPC"
+    description= "CIDR du VPC"
 }
 
 variable "AZS" {
