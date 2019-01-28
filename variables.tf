@@ -12,3 +12,8 @@ variable "AZS" {
     description = "Listes des zones de disponibilités"
     type = "list"
 }
+
+variable "SSH_KEY_NAME" {
+    description = "Nom de la clé SSH"
+    type = "string"
+}

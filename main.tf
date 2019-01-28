@@ -48,8 +48,35 @@ resource "aws_internet_gateway" "igw" {
 
 # Creation d'une paire de clé RSA
 resource "aws_key_pair" "mykey" {
-  key_name   = "ESIEE_key"
+  key_name   = "${var.SSH_KEY_NAME}"
   public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDQve2TG/MUrn2Yvw9Y1YuVabYaF/zR9Fuv6AhhsLsnZSDsxW+nAqeGgQESX3TF7w7PmmQsQdJj/dhDjndjIrAigeOr1CAjFHoYVMjE2k3epO4yivgkpKMNzfJGqJ934jE0X6NHl9767/PeschGFHUlIN2trMcnD6YdL3QWPz2w4yz8dhCp1KPuHbiPZguZSqTZ2i6Rm9cTTdso+APTq4f/tbyHLrA2icswyQ7kFII7VP4RHpOazt7XkBul5eFEA/3/ks8Al7AbpdcRuq7uPIYvD9HmyN2+stzdaBS9xHJs0DIzzXnEhXsZqT3giAabTJhPhLJnf5yc60mlLt7p77+x nicolas.frbezar@gmail.com"
+}
+
+# Creation d'un Security group pour accéder aux instances par SSH
+resource "aws_security_group" "nat_sg" {
+  name = "nat_sg"
+  description = "Nat sg"
+  vpc_id = "${aws_vpc.main.id}"
+
+  ingress {
+    from_port = 22
+    to_port = 22
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "SSH access"
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow all trafic egress"
+  }
+
+  tags = {
+    Name = "NAT SG"
+  }
 }
 
 # Récupération du NAT
@@ -72,7 +99,9 @@ resource "aws_instance" "nat" {
   count = "${length(var.AZS)}"
   ami           = "${data.aws_ami.nat_ami.id}"
   instance_type = "t2.micro"
-  subnet_id = "${element(aws_subnet.vpc_private.*.id, count.index)}"
+  subnet_id = "${element(aws_subnet.vpc_public.*.id, count.index)}"
+  vpc_security_group_ids = ["${aws_security_group.nat_sg.id}"]
+  key_name   = "${var.SSH_KEY_NAME}"
 
   tags = {
     Name = "${var.VPC_name}-nat-${element(var.AZS, count.index)}"
